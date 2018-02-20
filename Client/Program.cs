@@ -30,7 +30,8 @@ namespace Client
             {
                 Console.WriteLine(result);
             }
-            
+
+
             Console.ReadLine();
         }
 
@@ -45,14 +46,23 @@ namespace Client
         private static void SaveSite(string currentPage, uint depth)
         {            
             var fileName = CreateNema(currentPage);
-            var pathAndFile = $"{FolderName}{depth}\\" + fileName + ".html";
+            var pahtAndFileName = $"{FolderName}{depth}\\" + fileName;
+            var fileExtension = ".html";
+            var pathAndFile = pahtAndFileName + fileExtension;
 
             if (File.Exists(pathAndFile))
                 return;
 
             using (var client = new WebClient())
             {
-                client.DownloadFile(currentPage, pathAndFile);
+                try
+                {
+                    client.DownloadFile(currentPage, pathAndFile);
+                }
+                catch (Exception e)
+                {
+                    File.Create(pathAndFile + "_ERROR_" + fileExtension);
+                }
             }
         }
 
@@ -63,9 +73,13 @@ namespace Client
 
         private static string CreateNema(string page)
         {
-            return page.Replace("/", string.Empty)
-                       .Replace(".", string.Empty)
-                       .Replace(":", string.Empty);
+            var replace = page.Replace("/", string.Empty)
+                .Replace(".", string.Empty)
+                .Replace(":", string.Empty);
+
+            if (replace.EndsWith("html"))
+                replace = replace.Substring(0, replace.Length - 4);
+            return replace;
         }
 
 
