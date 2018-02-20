@@ -5,30 +5,30 @@ namespace SiteCrawler
 {
     public class TraverseStrategy<T> : ITraverseStrategy<T>
     {
-        private readonly Action<string> _traverseAction;
+        private readonly Action<string, uint> _traverseAction;
         private readonly Func<string, uint, T> _resultGenerator;
         private readonly PageAnalyzer _analyzer = new PageAnalyzer();
 
-        public TraverseStrategy(Action<string> traverseAction, Func<string, uint, T> resultGenerator)
+        public TraverseStrategy(Action<string, uint> traverseAction, Func<string, uint, T> resultGenerator)
         {
             _traverseAction = traverseAction;
             _resultGenerator = resultGenerator;
         }
 
-        public IEnumerable<T> CrawlSite(string startPage, uint depth, uint currentDepth)
+        public IEnumerable<T> CrawlSite(string page, string startpage, uint depth, uint currentDepth)
         {
-            _traverseAction.Invoke(startPage);
-            yield return _resultGenerator(startPage, currentDepth);
+            _traverseAction.Invoke(page, currentDepth);
+            yield return _resultGenerator(page, currentDepth);
 
             if (currentDepth >= depth) yield break;
-            foreach (var p in CrawlSubsite(startPage, depth, currentDepth)) yield return p;
+            foreach (var p in CrawlSubsite(page, startpage, depth, currentDepth)) yield return p;
         }
 
-        private IEnumerable<T> CrawlSubsite(string page, uint depth, uint currentDepth)
+        private IEnumerable<T> CrawlSubsite(string page, string startpage, uint depth, uint currentDepth)
         {
-            foreach (var subpage in _analyzer.GetSubpagesInSameDomain(page))
+            foreach (var subpage in _analyzer.GetSubpagesInSameDomain(page, startpage))
             {
-                foreach (var result in CrawlSite(subpage, depth, currentDepth + 1))
+                foreach (var result in CrawlSite(subpage, startpage, depth, currentDepth + 1))
                 {
                     yield return result;
                 }
@@ -38,7 +38,7 @@ namespace SiteCrawler
 
     public interface ITraverseStrategy<T>
     {
-        IEnumerable<T> CrawlSite(string startPage, uint depth, uint currentDepth);
+        IEnumerable<T> CrawlSite(string page, string startpage, uint depth, uint currentDepth);
     }
 
     public class Crawler<T>
@@ -53,7 +53,7 @@ namespace SiteCrawler
         public IEnumerable<T> CrawlSite(string startPage, uint depth)
         {
             uint depthZero = 0;
-            return _traverseStrategy.CrawlSite(startPage, depth, depthZero);
+            return _traverseStrategy.CrawlSite(startPage, startPage, depth, depthZero);
         }
     }
 }
